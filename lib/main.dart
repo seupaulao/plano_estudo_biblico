@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+// import 'banco.dart';
 
-void main() => runApp(MyApp());
+void main() {
+  // print(getTexto('GEN', 1, 1));
+  // print(getTexto('REV', 1, 1));
+  // print(getQuantidadeCapitulos('GEN'));
+  runApp(MyApp());
+}
 
 // =====================================================================
 // =========================== APP ROOT =================================

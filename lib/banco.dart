@@ -1,34 +1,60 @@
 // usar sqlite para banco de dados
-import 'dart:io';
-import 'package:flutter/services.dart';
-import 'package:sqflite/sqflite.dart';
+import 'dart:async';
+
+import 'package:flutter/widgets.dart';
 import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 Future<Database> openPrepopulatedDatabase() async {
-  String databasesPath = await getDatabasesPath();
-  String path = join(databasesPath, 'my_data.db');
-
-  // Check if the database already exists
-  bool exists = await databaseExists(path);
-
-  if (!exists) {
-    // Copy from asset
-    ByteData data = await rootBundle.load(join('assets', 'my_data.db'));
-    List<int> bytes = data.buffer.asUint8List(
-      data.offsetInBytes,
-      data.lengthInBytes,
-    );
-    await File(path).writeAsBytes(bytes, flush: true);
-  }
-
-  return await openDatabase(path);
+  WidgetsFlutterBinding.ensureInitialized();
+  // Inicializa FFI para desktop - remover ao tentar usar mobile
+  sqfliteFfiInit();
+  databaseFactory = databaseFactoryFfi;
+  final database = await openDatabase(
+    join(await getDatabasesPath(), 'banco.db'),
+  );
+  return database;
 }
 
 class Biblia {
   final String id;
   final String texto;
-  final bool like;
-  const Biblia({required this.id, required this.texto, required this.like});
+  final int gostei;
+  const Biblia({required this.id, required this.texto, required this.gostei});
+}
+
+class Livros {
+  final String id;
+  final String nome;
+  final int capitulos;
+  const Livros({required this.id, required this.nome, required this.capitulos});
+}
+
+Future<String> getNomeLivro(String chave) async {
+  final db = await openPrepopulatedDatabase();
+  final List<Map<String, dynamic>> resultado = await db.query(
+    "livros",
+    where: "id = ?",
+    whereArgs: [chave],
+  );
+  if (resultado.isNotEmpty) {
+    return resultado.first['nome'];
+  }
+  return '';
+}
+
+Future<int> getQuantidadeCapitulos(String chave) async {
+  final db = await openPrepopulatedDatabase();
+  final List<Map<String, dynamic>> resultado = await db.query(
+    "livros",
+    where: "id = ?",
+    whereArgs: [chave],
+  );
+  if (resultado.isNotEmpty) {
+    return resultado.first['capitulos'];
+  }
+  return -1;
 }
 
 Future<String> getTexto(String livro, int cap, int vers) async {
